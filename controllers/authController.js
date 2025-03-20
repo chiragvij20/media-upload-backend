@@ -8,17 +8,18 @@ const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 exports.googleLogin = async (req, res) => {
   const { token } = req.body;
-  console.log("Received token:", token); // Log the token
-
   try {
     const ticket = await client.verifyIdToken({
       idToken: token,
       audience: process.env.GOOGLE_CLIENT_ID,
     });
     const payload = ticket.getPayload();
-    console.log("Google payload:", payload); // Log the payload
+    console.log("Google payload:", payload);
 
-    const { sub, email, name } = payload;
+    const { sub, email, name, picture } = payload;
+
+    // Remove the =s96-c suffix from the picture URL
+    const cleanedPictureUrl = picture.replace(/=s96-c$/, "");
 
     // Check if user exists
     let { rows: user } = await db.query(
@@ -29,8 +30,8 @@ exports.googleLogin = async (req, res) => {
     if (user.length === 0) {
       // Create new user
       await db.query(
-        'INSERT INTO users ("googleId", "email", "name") VALUES ($1, $2, $3)',
-        [sub, email, name]
+        'INSERT INTO users ("googleId", "email", "name", "picture") VALUES ($1, $2, $3, $4)',
+        [sub, email, name, cleanedPictureUrl] // Include the picture field
       );
 
       // Fetch the newly created user
@@ -38,21 +39,19 @@ exports.googleLogin = async (req, res) => {
         'SELECT * FROM users WHERE "googleId" = $1',
         [sub]
       );
-
-      // Generate JWT for the new user
-      const jwtToken = jwt.sign({ id: newUser[0].id }, process.env.JWT_SECRET, {
-        expiresIn: "1h",
-      });
-      res.json({ token: jwtToken, user: newUser[0] });
-    } else {
-      // Generate JWT for existing user
-      const jwtToken = jwt.sign({ id: user[0].id }, process.env.JWT_SECRET, {
-        expiresIn: "1h",
-      });
-      res.json({ token: jwtToken, user: user[0] });
+      user = newUser;
     }
+
+    // Generate JWT
+    const jwtToken = jwt.sign({ id: user[0].id }, process.env.JWT_SECRET, {
+      expiresIn: "1h",
+    });
+
+    // Include the picture in the response
+    res.json({ token: jwtToken, user: { ...user[0], picture } });
+    console.log(res.json);
   } catch (err) {
-    console.error("Error in Google login:", err); // Log the error
-    res.status(500).json({ message: "Something went wrong" });
-  }
+    console.error("Error in Google login:", err);
+    res.status(500).json({ message: "Something went wrong" });
+  }
 };
