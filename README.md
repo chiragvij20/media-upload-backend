@@ -38,14 +38,12 @@ Before running the backend, ensure you have the following installed:
 
 ### 1. Clone the Repository
 
-bash
 git clone https://github.com/your-username/media-upload-backend.git
 cd media-upload-backend
 
 
 ### 2. Install Dependencies
 
-bash
 npm install
 
 
@@ -53,7 +51,6 @@ npm install
 
 Create a `.env` file in the root directory and add the following variables:
 
-plaintext
 DATABASE_URL=your_postgresql_connection_string
 JWT_SECRET=your_jwt_secret
 GOOGLE_CLIENT_ID=your_google_client_id
@@ -85,7 +82,6 @@ CREATE TABLE media (
 
 ### 5. Run the Backend
 
-bash
 npm start
 
 
@@ -183,15 +179,12 @@ The backend will start on `http://localhost:5001`.
 
 1. Fork the repository.
 2. Create a new branch:
-   bash
    git checkout -b feature/your-feature-name
    
 3. Commit your changes:
-   bash
    git commit -m "Add your feature"
    
 4. Push to the branch:
-   bash
    git push origin feature/your-feature-name
    
 5. Open a pull request.
